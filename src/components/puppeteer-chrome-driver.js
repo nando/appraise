@@ -1,12 +1,15 @@
 'use strict';
 const puppeteer = require('puppeteer');
-module.exports = function PuppeteerChromeDriver(/*config, components*/) {
-	const self = this;
+module.exports = function PuppeteerChromeDriver(config /*, components*/) {
+	const self = this, options = [];
 	let browser, page;
 
+	if (config['puppeteer-args']) {
+		options.args = config['puppeteer-args'].split(' ');
+	}
 
 	self.start = function () {
-		return puppeteer.launch()
+		return puppeteer.launch(options)
 			.then(t => browser = t)
 			.then(() => browser.newPage())
 			.then(p => {
@@ -30,14 +33,15 @@ module.exports = function PuppeteerChromeDriver(/*config, components*/) {
 	self.loadUrl = function (url) {
 		return page.goto(url, {waitUntil: 'networkidle2'});
 	};
-	self.describeContent = async function () {
+	self.describeContent = function () {
 		return page.$eval(':first-child', t => t.outerHTML.substr(0, 100));
 	};
-	self.getContentBox = async function () {
+	self.getContentBox = function () {
 		return page.$eval(':first-child', t => Object({height: t.scrollHeight, width: t.scrollWidth}));
 	};
 	self.screenshot = function () {
 		return page.screenshot({fullPage: true});
 	};
+	self.waitForNetworkIdle = () => page.waitForNetworkIdle();
 };
 
